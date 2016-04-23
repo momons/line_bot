@@ -52,7 +52,7 @@ func (service *SendMessage) Run() {
 					requestEntity.Content = service.createSendText("...返事がない...しかばねのようだ...")
 				} else {
 					// 処理追加
-					service.sentMessages.Insert(message.FromMid, []string{message.MessageId})
+					service.sentMessages.Insert(mid, []string{message.MessageId})
 
 					// テキスト
 					switch message.ContentType {

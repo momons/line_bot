@@ -10,12 +10,12 @@ import (
 type ContentMetadataAudio struct {
 	// ？.
 	AT_RECV_MODE string `json:"AT_RECV_MODE"`
+	// ？.
+	SKIP_BADGE_COUNT string `json:"SKIP_BADGE_COUNT"`
 	// 音声再生長.
 	AUDLEN string `json:"AUDLEN"`
 	// ？.
 	OBS_POP string `json:"OBS_POP"`
-	// ？.
-	SKIP_BADGE_COUNT string `json:"SKIP_BADGE_COUNT"`
 }
 
 // 新規音声メタデータ.

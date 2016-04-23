@@ -46,8 +46,8 @@ func (manager *UserProfiles) HasUser(
 	return !entity.IsLimit()
 }
 
-// 追加.
-func (manager *UserProfiles) UpdateInsert(
+// 追加更新.
+func (manager *UserProfiles) UpdateInsertForGetProfile(
 	entity ApiEntity.GetProfile,
 ) bool {
 
@@ -87,6 +87,50 @@ func (manager *UserProfiles) UpdateInsert(
 				tx.Rollback()
 				return false
 			}
+		}
+	}
+
+	tx.Commit()
+
+	return true
+}
+
+// 追加更新.
+func (manager *UserProfiles) UpdateInsertForMetadata(
+	entity ApiEntity.ContentMetadataContact,
+) bool {
+
+	// 現在日付取得
+	nowAt := time.Now()
+
+	tx := DB.Begin()
+
+	// 既存チェック
+	getEntity := manager.SelectOne(entity.Mid)
+	if getEntity == nil {
+		// 作成
+		insertEntity := DatabaseEntity.UserProfiles{
+			Mid:           entity.Mid,
+			DisplayName:   entity.DisplayName,
+			PictureUrl:    "",
+			StatusMessage: "",
+			UpdateAt:      nowAt,
+			CreateAt:      nowAt,
+		}
+		err := tx.Create(&insertEntity).Error
+		if err != nil {
+			log.Println(err)
+			tx.Rollback()
+			return false
+		}
+	} else {
+		getEntity.DisplayName = entity.DisplayName
+		getEntity.UpdateAt = nowAt
+		err := tx.Save(getEntity).Error
+		if err != nil {
+			log.Println(err)
+			tx.Rollback()
+			return false
 		}
 	}
 

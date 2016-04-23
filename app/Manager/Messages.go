@@ -30,9 +30,7 @@ func (manager *Messages) SelectUnsentList(
 		"message_id NOT IN ( SELECT message_id FROM sent_messages WHERE to_mid = ? ) AND from_mid != ?",
 		mid,
 		mid,
-		//"message_id NOT IN ( SELECT message_id FROM sent_messages WHERE to_mid = ? )",
-		//mid,
-	).Find(&entities).Error
+	).Order("update_at DESC").Limit(Constants.MaxSelectMessagesLimit).Find(&entities).Error
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -52,8 +50,9 @@ func (manager *Messages) SelectUpdateNotReply() (bool, *[]DatabaseEntity.Message
 	var entities []DatabaseEntity.Messages
 
 	err := tx.Where(
-		"replied = ?",
+		"replied = ? AND content_type != ?",
 		Constants.StatusTypeNotReply,
+		Constants.ContentTypeContact,
 	).Order("update_at DESC").Find(&entities).Error
 	if err != nil {
 		log.Println(err)

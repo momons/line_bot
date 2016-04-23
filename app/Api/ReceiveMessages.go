@@ -13,10 +13,14 @@ import (
 
 // メッセージ受信API.
 type ReceiveMessage struct {
-	// API
+	// API.
 	api *rest.Api
-	// ポート
+	// ポート.
 	port int
+	// ユーザプロフィールマネージャ.
+	userProfilesManager *Manager.UserProfiles
+	// メッセージマネージャ.
+	messageManager *Manager.Messages
 }
 
 // 新規取得.
@@ -49,16 +53,19 @@ func NewReceiveMessage(port int) *ReceiveMessage {
 	}
 	receiveMessage.api.SetApp(router)
 
+	receiveMessage.userProfilesManager = Manager.NewUserProfiles()
+	receiveMessage.messageManager = Manager.NewMessages()
+
 	return &receiveMessage
 }
 
 // メッセージ受信スタート.
-func (receiveMessage *ReceiveMessage) Start() {
-	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(receiveMessage.port), receiveMessage.api.MakeHandler()))
+func (api *ReceiveMessage) Start() {
+	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(api.port), api.api.MakeHandler()))
 }
 
 // メッセージ受信イベント.
-func (receiveMessage *ReceiveMessage) Receive(w rest.ResponseWriter, req *rest.Request) {
+func (api *ReceiveMessage) Receive(w rest.ResponseWriter, req *rest.Request) {
 
 	// リクエスト取得
 	requestEntity := ApiEntity.ReceivedMessage{}
@@ -70,23 +77,41 @@ func (receiveMessage *ReceiveMessage) Receive(w rest.ResponseWriter, req *rest.R
 	}
 
 	// ヘッダ情報チェック
+	if !api.isValidRequest(requestEntity) {
+		rest.Error(w, "", http.StatusBadRequest)
+		return
+	}
 
 	// メタデータ取得
-	go receiveMessage.fetchContentMetadata(requestEntity)
+	go api.fetchContentMetadata(requestEntity)
 
 	// ユーザ情報取得
-	go receiveMessage.fetchUserProfile(requestEntity)
+	go api.fetchUserProfile(requestEntity)
 
 	// 情報をテーブルに保存するのみ
-	messagesManagar := Manager.NewMessages()
-	messagesManagar.Insert(requestEntity)
+	api.messageManager.Insert(requestEntity)
 
 	// 即OKを返却
 	w.WriteJson(map[string]string{"status": "OK"})
 }
 
+// ヘッダ情報チェック
+func (api *ReceiveMessage) isValidRequest(
+	requestEntity ApiEntity.ReceivedMessage,
+) bool {
+
+	// to_midを判定、１つでも違う宛先が入っていたらダメ。
+	for _, result := range requestEntity.Result {
+		if len(result.Content.To) <= 0 || result.Content.To[0] != Constants.MID {
+			return false
+		}
+	}
+
+	return true
+}
+
 // コンテンツメタデータを取得.
-func (receiveMessage *ReceiveMessage) fetchContentMetadata(
+func (api *ReceiveMessage) fetchContentMetadata(
 	requestEntity ApiEntity.ReceivedMessage,
 ) {
 	for _, result := range requestEntity.Result {
@@ -110,31 +135,39 @@ func (receiveMessage *ReceiveMessage) fetchContentMetadata(
 			} else {
 				log.Println("Fetch content metadata failure.", result.Content.Id)
 			}
+		} else if result.Content.ContentType == Constants.ContentTypeContact {
+			metadata := ApiEntity.NewContentMetadataContact(result.Content.ContentMetadata)
+			if metadata != nil {
+				// 保存
+				api.userProfilesManager.UpdateInsertForMetadata(*metadata)
+			}
 		}
 	}
 }
 
 // ユーザ情報を取得.
-func (receiveMessage *ReceiveMessage) fetchUserProfile(
+func (api *ReceiveMessage) fetchUserProfile(
 	requestEntity ApiEntity.ReceivedMessage,
 ) {
-	userProfilesManager := Manager.NewUserProfiles()
 	for _, result := range requestEntity.Result {
-		hasUser := userProfilesManager.HasUser(result.From)
+		if result.Content.ContentType == Constants.ContentTypeContact {
+			continue
+		}
+		hasUser := api.userProfilesManager.HasUser(result.Content.From)
 		if !hasUser {
-			log.Println("Fetch user profile.", result.From)
+			log.Println("Fetch user profile.", result.Content.From)
 			// ユーザ情報取得
-			userProfile := NewUserProfile(result.From)
+			userProfile := NewUserProfile(result.Content.From)
 			userProfile.Send()
 			if userProfile.ResponseHttpStatus == http.StatusOK {
-				log.Println("Fetch user profile success.", result.From)
+				log.Println("Fetch user profile success.", result.Content.From)
 				entity := ApiEntity.NewGetProfile(userProfile.ResponseBody)
 				if entity != nil {
 					// 保存
-					userProfilesManager.UpdateInsert(*entity)
+					api.userProfilesManager.UpdateInsertForGetProfile(*entity)
 				}
 			} else {
-				log.Println("Fetch user profile failure.", result.From)
+				log.Println("Fetch user profile failure.", result.Content.From)
 			}
 		}
 	}
