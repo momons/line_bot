@@ -28,4 +28,7 @@ const (
 
 	// ユーザ情報期限 1日
 	UserProfilePeriod = 1
+
+	// 最大送信数
+	MaxSendMessagesCount = 150
 )

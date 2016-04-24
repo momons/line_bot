@@ -35,6 +35,19 @@ func (manager *UserProfiles) SelectOne(
 	return &entity
 }
 
+// 全て取得
+func (manager *UserProfiles) SelectList() []DatabaseEntity.UserProfiles {
+
+	var entities []DatabaseEntity.UserProfiles
+
+	err := DB.Find(&entities).Error
+	if err != nil {
+		return nil
+	}
+
+	return entities
+}
+
 // 既存チェック.
 func (manager *UserProfiles) HasUser(
 	mid string,

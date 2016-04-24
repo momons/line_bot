@@ -1,8 +1,8 @@
 package ApiEntity
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"log"
 )
 
@@ -26,7 +26,7 @@ type ContentMetadataSticker struct {
 
 // 新規ステッカーメタデータ.
 func NewContentMetadataSticker(
-jsonStr string,
+	jsonStr string,
 ) *ContentMetadataSticker {
 	var metadata ContentMetadataSticker
 	dec := json.NewDecoder(bytes.NewBuffer([]byte(jsonStr)))

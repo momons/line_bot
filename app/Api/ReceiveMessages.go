@@ -46,6 +46,8 @@ func NewReceiveMessage(port int) *ReceiveMessage {
 	// ルーティング設定
 	router, err := rest.MakeRouter(
 		&rest.Route{"POST", "/", receiveMessage.Receive},
+		&rest.Route{"POST", "/_send_text", receiveMessage.ReceiveDiffusionText},
+		&rest.Route{"POST", "/_send_sticker", receiveMessage.ReceiveDiffusionSticker},
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -172,3 +174,4 @@ func (api *ReceiveMessage) fetchUserProfile(
 		}
 	}
 }
+
