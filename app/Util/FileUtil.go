@@ -71,7 +71,7 @@ func (util *FileUtil) getDir(
 	case Constants.ContentTypeImage:
 		return Constants.DirImage
 	case Constants.ContentTypeVideo:
-		return Constants.DirImage
+		return Constants.DirVideo
 	case Constants.ContentTypeAudio:
 		return Constants.DirAudio
 	}
@@ -86,7 +86,7 @@ func (util *FileUtil) getPath(
 	case Constants.ContentTypeImage:
 		return Constants.UrlImage
 	case Constants.ContentTypeVideo:
-		return Constants.UrlImage
+		return Constants.UrlVideo
 	case Constants.ContentTypeAudio:
 		return Constants.UrlAudio
 	}
