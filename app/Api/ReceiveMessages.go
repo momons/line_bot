@@ -47,6 +47,7 @@ func NewReceiveMessage(port int) *ReceiveMessage {
 	router, err := rest.MakeRouter(
 		&rest.Route{"POST", "/", receiveMessage.Receive},
 		&rest.Route{"POST", "/_send_text", receiveMessage.ReceiveDiffusionText},
+		&rest.Route{"POST", "/_send_image", receiveMessage.ReceiveDiffusionImage},
 		&rest.Route{"POST", "/_send_sticker", receiveMessage.ReceiveDiffusionSticker},
 	)
 	if err != nil {

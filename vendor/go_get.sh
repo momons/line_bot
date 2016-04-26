@@ -7,3 +7,5 @@ go get github.com/jinzhu/gorm/dialects/postgres
 go get github.com/jinzhu/gorm
 # Image resize.
 go get github.com/nfnt/resize
+# UUID
+go get github.com/satori/go.uuid
